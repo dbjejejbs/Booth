@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#fff0f6" />
+    <meta name="description" content="Romantic AI Photobooth — show a peace sign to capture." />
+    <title>Romantic AI Photobooth</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Quicksand:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <!-- ===================== CAMERA STAGE ===================== -->
+    <main id="stage" class="stage">
+      <!-- Live camera video (mirrored) -->
+      <video id="camera" class="camera-video" autoplay playsinline muted></video>
+
+      <!-- Soft blurred backdrop behind the camera for depth -->
+      <div class="backdrop" aria-hidden="true"></div>
+
+      <!-- Active frame overlay (sits above the camera, below the UI chrome) -->
+      <img id="frame-overlay" class="frame-overlay" alt="" />
+
+      <!-- Floating decorative particles -->
+      <div id="particles" class="particles" aria-hidden="true"></div>
+
+      <!-- ===== Top status bar ===== -->
+      <header class="top-bar">
+        <div class="status-chip" id="ai-status">
+          <span class="status-dot" id="status-dot"></span>
+          <span class="status-text" id="status-text">Loading AI…</span>
+        </div>
+        <div class="brand">
+          <span class="brand-heart">❤</span>
+          <span class="brand-name">Romantic Booth</span>
+        </div>
+        <button id="gallery-toggle" class="icon-btn gallery-toggle" title="Gallery" aria-label="Open gallery">
+          <span class="gallery-count" id="gallery-count">0</span>
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="3" />
+            <circle cx="8.5" cy="8.5" r="1.6" />
+            <path d="M21 15l-5-5L5 21" />
+          </svg>
+        </button>
+      </header>
+
+      <!-- ===== Hint / gesture prompt ===== -->
+      <div class="hint" id="hint">
+        <div class="hint-emoji">✌️</div>
+        <div class="hint-text">Show a peace sign to capture</div>
+      </div>
+
+      <!-- ===== Countdown overlay ===== -->
+      <div id="countdown" class="countdown hidden" aria-live="assertive">
+        <span id="countdown-number" class="countdown-number">3</span>
+      </div>
+
+      <!-- ===== Capture flash ===== -->
+      <div id="flash" class="flash" aria-hidden="true"></div>
+
+      <!-- ===== Captured toast ===== -->
+      <div id="capture-toast" class="capture-toast hidden">Captured ❤️</div>
+
+      <!-- ===== Bottom control dock ===== -->
+      <footer class="dock">
+        <button id="switch-cam" class="dock-btn" title="Switch camera" aria-label="Switch camera">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 7h3l2-3h8l2 3h3v12H3z" />
+            <path d="M9 13a3 3 0 1 0 6 0 3 3 0 1 0-6 0z" />
+          </svg>
+          <span>Flip</span>
+        </button>
+
+        <button id="capture-btn" class="dock-btn dock-btn--primary" title="Capture" aria-label="Capture photo">
+          <span class="shutter-ring">
+            <span class="shutter-core"></span>
+          </span>
+          <span>Capture</span>
+        </button>
+
+        <button id="frame-btn" class="dock-btn" title="Change frame" aria-label="Change frame">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="3" />
+            <path d="M3 9h18M9 3v18" opacity=".5" />
+          </svg>
+          <span>Frame</span>
+        </button>
+      </footer>
+
+      <!-- ===== Gallery strip preview (latest thumbnail) ===== -->
+      <div id="gallery-preview" class="gallery-preview hidden">
+        <img id="preview-thumb" alt="Last captured photo" />
+        <span class="preview-label">Latest</span>
+      </div>
+    </main>
+
+    <!-- ===================== GALLERY DRAWER ===================== -->
+    <aside id="gallery-drawer" class="gallery-drawer" aria-hidden="true">
+      <div class="drawer-head">
+        <h2 class="drawer-title">Your Photos</h2>
+        <button id="gallery-close" class="icon-btn" aria-label="Close gallery">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div id="gallery-grid" class="gallery-grid">
+        <p class="gallery-empty" id="gallery-empty">No photos yet — show a ✌️ to begin.</p>
+      </div>
+    </aside>
+    <div id="drawer-scrim" class="drawer-scrim hidden" aria-hidden="true"></div>
+
+    <!-- ===================== PHOTO LIGHTBOX ===================== -->
+    <div id="lightbox" class="lightbox hidden" aria-hidden="true">
+      <div class="lightbox-card glass">
+        <button id="lightbox-close" class="icon-btn lightbox-close" aria-label="Close">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg>
+        </button>
+        <img id="lightbox-img" class="lightbox-img" alt="Photo" />
+        <div class="lightbox-actions">
+          <button id="lb-download" class="lb-btn">Download</button>
+          <button id="lb-retake" class="lb-btn">Retake</button>
+          <button id="lb-delete" class="lb-btn lb-btn--danger">Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== PERMISSION / ERROR BANNER ===================== -->
+    <div id="error-banner" class="error-banner hidden">
+      <div class="error-card glass">
+        <div class="error-emoji">📷</div>
+        <h2 id="error-title">Camera unavailable</h2>
+        <p id="error-msg">Please allow camera access and reload.</p>
+        <button id="error-retry" class="lb-btn">Try again</button>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
