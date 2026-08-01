@@ -51,18 +51,38 @@ export class GestureDetector {
     await tf.ready();
     this.onStatus('Loading hand model…');
 
-    this.detector = await handPoseDetection.createDetector(
-      handPoseDetection.SupportedModels.MediaPipeHands,
+    // Try a fast mirror first, fall back to the default tfhub source.
+    const configs: handPoseDetection.MediaPipeHandsTfjsModelConfig[] = [
       {
-        runtime: 'mediapipe',
-        solutionPath:
-          'https://cdn.jsdelivr.net/npm/@mediapipe/hands',
+        runtime: 'tfjs',
         modelType: 'lite',
         maxHands: 2,
-      } as handPoseDetection.MediaPipeHandsMediaPipeModelConfig,
-    );
+        detectorModelUrl:
+          'https://storage.googleapis.com/mediapipe-models/handpose_3d/detector/lite/1/detector.json',
+        landmarkModelUrl:
+          'https://storage.googleapis.com/mediapipe-models/handpose_3d/landmark/lite/1/landmark.json',
+      },
+      {
+        runtime: 'tfjs',
+        modelType: 'lite',
+        maxHands: 2,
+      },
+    ];
 
-    this.onStatus('Ready');
+    let lastErr: unknown = null;
+    for (const cfg of configs) {
+      try {
+        this.detector = await handPoseDetection.createDetector(
+          handPoseDetection.SupportedModels.MediaPipeHands,
+          cfg,
+        );
+        this.onStatus('Ready');
+        return;
+      } catch (e) {
+        lastErr = e;
+      }
+    }
+    throw lastErr;
   }
 
   start(): void {
